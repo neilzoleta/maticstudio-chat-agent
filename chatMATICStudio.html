@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaticStudio Chat Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 400px;
+            height: 600px;
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .chat-header {
+            background: #212529;
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h3 {
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .reset-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .reset-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(180deg);
+        }
+
+        .model-selector {
+            display: inline-block;
+            margin-left: 8px;
+            vertical-align: super;
+        }
+
+        .model-selector select {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 9px;
+            color: white;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+            font-weight: normal;
+        }
+
+        .model-selector select:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .model-selector select:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .model-selector option {
+            background: #212529;
+            color: white;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .bot-message {
+            background: #f8f9fa;
+            color: #212529;
+            align-self: flex-start;
+            border: 1px solid #e9ecef;
+        }
+
+        .bot-message p {
+            margin: 0 0 12px 0;
+            line-height: 1.5;
+        }
+
+        .bot-message p:last-child {
+            margin-bottom: 0;
+        }
+
+        .bot-message h3, .bot-message h4, .bot-message h5 {
+            margin: 16px 0 8px 0;
+            color: #212529;
+            font-weight: 600;
+        }
+
+        .bot-message h3 {
+            font-size: 16px;
+        }
+
+        .bot-message h4 {
+            font-size: 15px;
+        }
+
+        .bot-message h5 {
+            font-size: 14px;
+        }
+
+        .bot-message ul {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .bot-message li {
+            margin: 4px 0;
+            line-height: 1.4;
+        }
+
+        .bot-message strong {
+            font-weight: 600;
+            color: #212529;
+        }
+
+        .bot-message em {
+            font-style: italic;
+        }
+
+        .user-message {
+            background: #212529;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .quick-replies-container {
+            padding: 12px 20px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .quick-reply-btn {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 16px;
+            padding: 10px 18px;
+            font-size: 14px;
+            color: #495057;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            width: auto;
+            max-width: 250px;
+            font-weight: 500;
+            margin: 0;
+            display: block;
+            align-self: flex-start;
+        }
+
+        .quick-reply-btn:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .quick-reply-btn {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: buttonFadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes buttonFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-input {
+            padding: 16px 20px;
+            border-top: 1px solid #e9ecef;
+            background: white;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #dee2e6;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+            background: #f8f9fa;
+        }
+
+        .message-input:focus {
+            border-color: #6c757d;
+            background: white;
+        }
+
+        .send-btn {
+            width: 36px;
+            height: 36px;
+            background: #212529;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .send-btn:hover {
+            background: #495057;
+        }
+
+        .send-btn:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+        }
+
+        .typing-indicator {
+            align-self: flex-start;
+            padding: 10px 14px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 12px;
+        }
+
+        .typing-dots {
+            display: inline-block;
+        }
+
+        .typing-dots::after {
+            content: '';
+            animation: typing 1.5s infinite;
+        }
+
+        @keyframes typing {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        @media (max-width: 480px) {
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+                border: none;
+            }
+            .chat-header {
+                border-radius: 0;
+            }
+            .chat-input {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div>
+                <h3>MaticStudio Assistant<span class="model-selector">
+                    <select id="modelSelect" onchange="changeModel(this.value)">
+                        <option value="gpt-4o" selected>GPT-4o</option>
+                        <option value="gpt-4o-mini">GPT-4o Mini</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                    </select>
+                </span></h3>
+            </div>
+            <button class="reset-btn" onclick="resetConversation()" title="Reset Conversation">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                    <path d="M21 3v5h-5"></path>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                    <path d="M3 21v-5h5"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will be populated by JavaScript -->
+        </div>
+
+        <div class="quick-replies-container" id="quickRepliesContainer">
+            <!-- Quick reply buttons will be inserted here -->
+        </div>
+
+        <div class="chat-input">
+            <div class="input-container">
+                <input 
+                    type="text" 
+                    class="message-input" 
+                    id="messageInput" 
+                    placeholder="Type your message..."
+                    onkeypress="handleKeyPress(event)"
+                >
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22,2 15,22 11,13 2,9"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // MATIC Studio Chat Agent Implementation
+        class MaticStudioChatAgent {
+            constructor() {
+                this.messages = [];
+                this.isProcessing = false;
+                this.apiEndpoint = '/api/chat'; // Flask API endpoint
+                this.init();
+            }
+
+            init() {
+                this.addBotMessage("Hello! I'm your MATIC Studio assistant. I'm here to help you discover how automation can transform your business processes. What would you like to learn about today?");
+                this.addQuickReplyButtons(["Set a tune-up call?", "What do you offer?", "Learn more about MATICStudio"]);
+            }
+
+            addMessage(content, isUser = false) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+                
+                if (isUser) {
+                    messageDiv.textContent = content;
+                } else {
+                    // Format bot messages with better styling
+                    messageDiv.innerHTML = this.formatBotMessage(content);
+                }
+                
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                this.messages.push({
+                    role: isUser ? 'user' : 'assistant',
+                    content: content
+                });
+            }
+
+            formatBotMessage(content) {
+                // Convert markdown-style formatting to HTML
+                let formatted = content
+                    // Bold text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    // Italic text
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    // Headers
+                    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                    .replace(/^## (.*$)/gm, '<h4>$1</h4>')
+                    .replace(/^# (.*$)/gm, '<h5>$1</h5>')
+                    // Lists
+                    .replace(/^• (.*$)/gm, '<li>$1</li>')
+                    .replace(/^- (.*$)/gm, '<li>$1</li>')
+                    // Line breaks
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/\n/g, '<br>');
+                
+                // Wrap in paragraphs if not already wrapped
+                if (!formatted.includes('<p>') && !formatted.includes('<h')) {
+                    formatted = `<p>${formatted}</p>`;
+                }
+                
+                // Handle lists
+                if (formatted.includes('<li>')) {
+                    formatted = formatted.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+                }
+                
+                return formatted;
+            }
+
+            addBotMessage(content) {
+                this.addMessage(content, false);
+            }
+
+            addQuickReplyButtons(quickReplies = []) {
+                const container = document.getElementById('quickRepliesContainer');
+                container.innerHTML = ''; // Clear existing buttons
+                
+                quickReplies.forEach((reply, index) => {
+                    const button = document.createElement('button');
+                    button.className = 'quick-reply-btn';
+                    button.textContent = reply;
+                    button.style.animationDelay = `${index * 0.1}s`; // Staggered delay
+                    button.onclick = () => {
+                        this.processMessage(reply);
+                        // Hide the quick replies container when button is clicked
+                        container.style.display = 'none';
+                    };
+                    
+                    container.appendChild(button);
+                });
+            }
+
+            addUserMessage(content) {
+                this.addMessage(content, true);
+            }
+
+            showTypingIndicator() {
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'typing-indicator';
+                typingDiv.id = 'typingIndicator';
+                typingDiv.innerHTML = '🤖 Thinking<span class="typing-dots"></span>';
+                
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.appendChild(typingDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            hideTypingIndicator() {
+                const typingIndicator = document.getElementById('typingIndicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+            }
+
+            async sendMessageToAPI(userMessage) {
+                try {
+                    const response = await fetch(this.apiEndpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            message: userMessage,
+                            conversation_history: this.messages
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    return data.response;
+                } catch (error) {
+                    console.error('Error sending message to API:', error);
+                    return "I apologize, but I'm having trouble connecting to the server right now. Please try again later or contact us directly at inquire@maticstudio.net.";
+                }
+            }
+
+            async processMessage(userMessage) {
+                if (this.isProcessing) return;
+                
+                this.isProcessing = true;
+                this.addUserMessage(userMessage);
+                
+                // Show typing indicator
+                this.showTypingIndicator();
+                
+                // Disable input
+                const messageInput = document.getElementById('messageInput');
+                const sendBtn = document.getElementById('sendBtn');
+                messageInput.disabled = true;
+                sendBtn.disabled = true;
+
+                try {
+                    // Send message to API
+                    const botResponse = await this.sendMessageToAPI(userMessage);
+                    
+                    // Hide typing indicator
+                    this.hideTypingIndicator();
+                    
+                    // Add bot response
+                    this.addBotMessage(botResponse);
+                    
+                } catch (error) {
+                    console.error('Error processing message:', error);
+                    this.hideTypingIndicator();
+                    this.addBotMessage("I apologize, but I encountered an error. Please try again or contact us directly at inquire@maticstudio.net.");
+                } finally {
+                    // Re-enable input
+                    messageInput.disabled = false;
+                    sendBtn.disabled = false;
+                    messageInput.focus();
+                    this.isProcessing = false;
+                }
+            }
+        }
+
+        // Initialize the chat agent
+        const chatAgent = new MaticStudioChatAgent();
+
+        // Global functions for HTML onclick handlers
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (message && !chatAgent.isProcessing) {
+                // Hide quick replies container when user sends a message
+                const quickRepliesContainer = document.getElementById('quickRepliesContainer');
+                if (quickRepliesContainer) {
+                    quickRepliesContainer.style.display = 'none';
+                }
+                
+                chatAgent.processMessage(message);
+                messageInput.value = '';
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function resetConversation() {
+            // Clear chat messages
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+            
+            // Reset the chat agent
+            chatAgent.messages = [];
+            chatAgent.isProcessing = false;
+            
+            // Re-initialize with greeting and quick replies (same order as original)
+            chatAgent.addBotMessage("Hello! I'm your MATIC Studio assistant. I'm here to help you discover how automation can transform your business processes. What would you like to learn about today?");
+            
+            // Ensure container is visible and has proper styling
+            const quickRepliesContainer = document.getElementById('quickRepliesContainer');
+            if (quickRepliesContainer) {
+                quickRepliesContainer.style.display = 'flex';
+                quickRepliesContainer.style.flexDirection = 'column';
+                quickRepliesContainer.style.gap = '8px';
+            }
+            
+            chatAgent.addQuickReplyButtons(["Set a tune-up call?", "What do you offer?", "Learn more about MATICStudio"]);
+        }
+
+        function changeModel(modelName) {
+            // Update the chat agent's model
+            chatAgent.model = modelName;
+            
+            // Show a subtle notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #212529;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-size: 12px;
+                z-index: 1000;
+                opacity: 0;
+                transform: translateY(-10px);
+                transition: all 0.3s ease;
+            `;
+            notification.textContent = `Model changed to ${modelName}`;
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.opacity = '1';
+                notification.style.transform = 'translateY(0)';
+            }, 10);
+            
+            // Remove after 2 seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

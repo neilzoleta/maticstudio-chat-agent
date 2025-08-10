@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MATIC Studio - Chat Agent Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #212529;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: #212529;
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #007bff;
+        }
+
+        .stat-card h3 {
+            color: #6c757d;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #212529;
+        }
+
+        .leads-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .leads-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leads-table th,
+        .leads-table td {
+            padding: 12px 20px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .leads-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .leads-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-new {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-contacted {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-qualified {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status-closed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .refresh-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .refresh-btn:hover {
+            background: #0056b3;
+        }
+
+        .api-key-input {
+            margin-bottom: 20px;
+        }
+
+        .api-key-input input {
+            width: 300px;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .api-key-input button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .api-key-input button:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>MATIC Studio Chat Agent - Admin Dashboard</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="api-key-input">
+            <input type="password" id="api-key-input" placeholder="Enter Admin API Key">
+            <button onclick="setApiKey()">Set API Key</button>
+        </div>
+
+        <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
+
+        <div id="error-message" class="error" style="display: none;"></div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Leads</h3>
+                <div class="value" id="total-leads">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>New Leads</h3>
+                <div class="value" id="new-leads">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Conversations</h3>
+                <div class="value" id="total-conversations">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Top Company</h3>
+                <div class="value" id="top-company">-</div>
+            </div>
+        </div>
+
+        <div class="leads-section">
+            <div class="section-header">
+                <h2>Recent Leads</h2>
+            </div>
+            <div id="leads-content">
+                <div class="loading">Loading leads...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let apiKey = localStorage.getItem('maticstudio_admin_api_key');
+        let renderUrl = 'YOUR_RENDER_URL'; // Replace with your Render.com URL
+
+        // Set API key
+        function setApiKey() {
+            const input = document.getElementById('api-key-input');
+            apiKey = input.value;
+            localStorage.setItem('maticstudio_admin_api_key', apiKey);
+            loadData();
+        }
+
+        // Load API key from storage
+        if (apiKey) {
+            document.getElementById('api-key-input').value = apiKey;
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Hide error message
+        function hideError() {
+            document.getElementById('error-message').style.display = 'none';
+        }
+
+        // Load analytics data
+        async function loadAnalytics() {
+            if (!apiKey) return;
+
+            try {
+                const response = await fetch(`${renderUrl}/api/admin/analytics`, {
+                    headers: {
+                        'X-API-Key': apiKey
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load analytics');
+                }
+
+                const data = await response.json();
+                
+                document.getElementById('total-leads').textContent = data.total_leads || 0;
+                document.getElementById('new-leads').textContent = data.new_leads || 0;
+                document.getElementById('total-conversations').textContent = data.total_conversations || 0;
+                
+                const topCompany = data.top_companies && data.top_companies[0];
+                document.getElementById('top-company').textContent = topCompany ? topCompany._id : 'None';
+
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                showError('Failed to load analytics data');
+            }
+        }
+
+        // Load leads data
+        async function loadLeads() {
+            if (!apiKey) return;
+
+            try {
+                const response = await fetch(`${renderUrl}/api/admin/leads?limit=20`, {
+                    headers: {
+                        'X-API-Key': apiKey
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load leads');
+                }
+
+                const data = await response.json();
+                
+                if (data.leads && data.leads.length > 0) {
+                    const tableHTML = `
+                        <table class="leads-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Company</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Conversations</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.leads.map(lead => `
+                                    <tr>
+                                        <td>${lead.name || '-'}</td>
+                                        <td>${lead.email || '-'}</td>
+                                        <td>${lead.company || '-'}</td>
+                                        <td>${lead.phone || '-'}</td>
+                                        <td><span class="status-badge status-${lead.status || 'new'}">${lead.status || 'new'}</span></td>
+                                        <td>${new Date(lead.created_at).toLocaleDateString()}</td>
+                                        <td>${lead.conversation_count || 1}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                    document.getElementById('leads-content').innerHTML = tableHTML;
+                } else {
+                    document.getElementById('leads-content').innerHTML = '<div class="loading">No leads found</div>';
+                }
+
+            } catch (error) {
+                console.error('Error loading leads:', error);
+                showError('Failed to load leads data');
+            }
+        }
+
+        // Load all data
+        async function loadData() {
+            hideError();
+            
+            if (!apiKey) {
+                showError('Please set your Admin API Key first');
+                return;
+            }
+
+            await Promise.all([
+                loadAnalytics(),
+                loadLeads()
+            ]);
+        }
+
+        // Load data on page load
+        if (apiKey) {
+            loadData();
+        }
+    </script>
+</body>
+</html>

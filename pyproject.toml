@@ -1,0 +1,23 @@
+[project]
+name = "maticstudio-chat-agent"
+version = "0.1.0"
+description = "AI Chat Agent for Matic Studio - Assisting potential clients and leads"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "boto3>=1.40.2",
+    "openai>=1.98.0",
+    "python-dotenv>=1.1.1",
+    "requests>=2.32.4",
+    "streamlit>=1.47.1",
+    "flask>=3.0.0",
+    "icalendar>=5.0.0",
+    "datetime>=5.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
